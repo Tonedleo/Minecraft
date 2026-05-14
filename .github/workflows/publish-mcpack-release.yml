@@ -2,15 +2,25 @@ name: Publish .mcpack release
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Build .mcpack"]
+    types: [completed]
 
 permissions:
   contents: write
 
 jobs:
   publish:
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == github.event.repository.default_branch)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Package behavior pack
         run: |
