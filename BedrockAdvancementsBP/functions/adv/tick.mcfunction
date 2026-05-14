@@ -11,6 +11,14 @@ scoreboard players add @a adv_r_str 0
 scoreboard players add @a adv_r_egg 0
 
 execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:oak_log,quantity=1..}] run function adv/award/easy_punching_trees
+execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:spruce_log,quantity=1..}] run function adv/award/easy_punching_trees
+execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:birch_log,quantity=1..}] run function adv/award/easy_punching_trees
+execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:jungle_log,quantity=1..}] run function adv/award/easy_punching_trees
+execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:acacia_log,quantity=1..}] run function adv/award/easy_punching_trees
+execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:dark_oak_log,quantity=1..}] run function adv/award/easy_punching_trees
+execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:mangrove_log,quantity=1..}] run function adv/award/easy_punching_trees
+execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:cherry_log,quantity=1..}] run function adv/award/easy_punching_trees
+execute as @a[scores={adv_e_log=0},hasitem={item=minecraft:pale_oak_log,quantity=1..}] run function adv/award/easy_punching_trees
 execute as @a[scores={adv_e_stn=0},hasitem={item=minecraft:cobblestone,quantity=1..}] run function adv/award/easy_stone_age
 execute as @a[scores={adv_e_hnt=0},hasitem={item=minecraft:rotten_flesh,quantity=1..}] run function adv/award/easy_monster_hunter
 

@@ -4,7 +4,7 @@ Advancements pack for Bedrock Edition.
 
 ## Included pack
 
-`/home/runner/work/Minecraft/Minecraft/BedrockAdvancementsBP`
+`BedrockAdvancementsBP`
 
 This behavior pack provides:
 
