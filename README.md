@@ -28,7 +28,7 @@ The easiest way to test the pack — no manual zipping required:
 
 ### One-tap latest release link
 
-After the **Publish .mcpack release** workflow runs (automatically after a successful build on the default branch, or manually), you can use this stable download URL:
+After a successful **Build .mcpack** run on the default branch (or after manually running **Publish .mcpack release**), you can use this stable download URL:
 
 - https://github.com/Tonedleo/Minecraft/releases/latest/download/BedrockAdvancementsBP.mcpack
 
@@ -50,5 +50,5 @@ On phone, tap that link and open the downloaded `.mcpack` in Minecraft Bedrock E
 ### Publish a latest-release download
 
 1. Go to the **Actions** tab of this repository on GitHub.
-2. If needed, run the **Publish .mcpack release** workflow manually (it also runs automatically after successful default-branch builds).
+2. If needed, run the **Publish .mcpack release** workflow manually.
 3. Share or open the stable link above.
