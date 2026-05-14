@@ -1,0 +1,25 @@
+name: Build .mcpack
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package behavior pack
+        run: |
+          cd BedrockAdvancementsBP
+          zip -r ../BedrockAdvancementsBP.mcpack .
+
+      - name: Upload mcpack artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BedrockAdvancementsBP
+          path: BedrockAdvancementsBP.mcpack
+          retention-days: 90

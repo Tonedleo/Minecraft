@@ -19,12 +19,20 @@ This behavior pack provides:
 2. Enable the behavior pack in your world.
 3. For realms, upload/replace the realm world with this behavior pack enabled.
 4. Join the world and run:
+   - `/function adv/setup` once to initialise scoreboards (run this each time you enable the pack on a new world).
    - `/function adv/show` to check completed and remaining advancements.
 
-## Quick mobile import (web -> app)
+## Quick install — download the ready-made `.mcpack`
 
-1. Download this repository as a ZIP from GitHub.
-2. Open the ZIP and extract only the `BedrockAdvancementsBP` folder.
-3. Compress that folder into a new zip, then rename it from `.zip` to `.mcpack`.
-4. Tap the `.mcpack` file on your phone and choose **Minecraft** to import it.
-5. In Minecraft, enable the pack on your world (or realm world), then run `/function adv/show`.
+The easiest way to test the pack — no manual zipping required:
+
+1. Go to the **Actions** tab of this repository on GitHub.
+2. Click the latest **Build .mcpack** workflow run (green ✓ or in-progress).  
+   — Or click **Run workflow** (the button on the right) to build from any branch on demand.
+3. Scroll down to **Artifacts** and click **BedrockAdvancementsBP** to download the zip.
+4. Unzip it — you get `BedrockAdvancementsBP.mcpack`.
+5. **Double-click** (Windows/Mac) or **tap** (Android/iOS) the `.mcpack` file.  
+   Minecraft opens and imports it automatically.
+6. Enable the behavior pack on your world (or realm world), then run `/function adv/setup` once, and `/function adv/show` to view progress.
+
+> The artifact is rebuilt automatically on every push, so it always contains the latest version of the pack.
