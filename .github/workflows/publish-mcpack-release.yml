@@ -30,5 +30,6 @@ jobs:
         run: |
           gh release create "${{ steps.release.outputs.tag }}" BedrockAdvancementsBP.mcpack \
             --repo "${{ github.repository }}" \
+            --latest \
             --title "${{ steps.release.outputs.title }}" \
             --notes "Download \`BedrockAdvancementsBP.mcpack\` and open it in Minecraft Bedrock Edition."
