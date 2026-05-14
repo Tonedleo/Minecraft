@@ -1,0 +1,21 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Realm Advancements Pack",
+    "description": "Mixed-difficulty Bedrock advancements with in-game progress tracking.",
+    "uuid": "4df22ca0-2fd5-4ea6-9f3c-91ee9556278e",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 20, 0]
+  },
+  "modules": [
+    {
+      "description": "Realm Advancements behavior module",
+      "type": "data",
+      "uuid": "f44bd4a4-49d5-4d06-8fb2-a6f5a83a9310",
+      "version": [1, 0, 0]
+    }
+  ],
+  "metadata": {
+    "authors": ["Tonedleo"]
+  }
+}
