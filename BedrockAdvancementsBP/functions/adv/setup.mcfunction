@@ -23,3 +23,5 @@ scoreboard players add @a adv_r_str 0
 scoreboard players add @a adv_r_egg 0
 
 tellraw @a {"rawtext":[{"text":"§a[Advancements] Loaded. Run §e/function adv/show §ato view your progress."}]}
+
+function stats/setup
