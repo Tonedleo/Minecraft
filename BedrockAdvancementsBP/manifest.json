@@ -5,7 +5,7 @@
     "description": "Mixed-difficulty Bedrock advancements with in-game progress tracking.",
     "uuid": "4df22ca0-2fd5-4ea6-9f3c-91ee9556278e",
     "version": [1, 0, 0],
-    "min_engine_version": [1, 20, 0]
+    "min_engine_version": [1, 26, 20]
   },
   "modules": [
     {
