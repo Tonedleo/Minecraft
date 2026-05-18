@@ -12,16 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Package behavior pack
         run: |
-          cd /home/runner/work/Minecraft/Minecraft
           rm -f BedrockEditionLocked.mcpack
           zip -r BedrockEditionLocked.mcpack BedrockAdvancementsBP
 
       - name: Upload .mcpack artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: BedrockEditionLocked
-          path: /home/runner/work/Minecraft/Minecraft/BedrockEditionLocked.mcpack
+          path: BedrockEditionLocked.mcpack
