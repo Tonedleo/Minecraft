@@ -708,8 +708,40 @@ function sendBoundaryWarning(player) {
   }
 
   boundaryWarnings.set(player.id, runtimeTicks);
-  player.onScreenDisplay.setActionBar("§cThat chunk is still locked.");
-  player.sendMessage("§c[LockedChunk] Stay inside unlocked chunks or earn more progress.");
+
+  const dimensionId = player.dimension.id;
+  const nextCost = calculateUnlockCost(dimensionId);
+  const currentPool = state?.progress ?? 0;
+  const shortfall = Math.max(0, nextCost - currentPool);
+  const dimLabel = DIMENSION_LABELS[dimensionId] ?? dimensionId;
+
+  player.onScreenDisplay.setActionBar(
+    `§cLocked! Need §e${nextCost}§c progress (have §a${currentPool}§c) — type §f!lc unlock ${dimLabel.toLowerCase()}`,
+  );
+
+  if (shortfall > 0) {
+    player.sendMessage(
+      [
+        `§c[LockedChunk] §fThat chunk is locked!`,
+        `§7  Dimension : §b${dimLabel}`,
+        `§7  Pool now  : §a${currentPool}`,
+        `§7  Need      : §e${nextCost}`,
+        `§7  Shortfall : §c${shortfall}`,
+        `§7Earn progress: §f!lc deposit <resource>§7 (e.g. §f!lc deposit iron§7)`,
+        `§7Then unlock  : §f!lc unlock ${dimLabel.toLowerCase()}`,
+        `§7See options  : §f!lc help`,
+      ].join("\n"),
+    );
+  } else {
+    player.sendMessage(
+      [
+        `§c[LockedChunk] §fThat chunk is locked!`,
+        `§7  Dimension : §b${dimLabel}`,
+        `§7  Pool now  : §a${currentPool} §7(enough!)`,
+        `§7Unlock it now: §f!lc unlock ${dimLabel.toLowerCase()}`,
+      ].join("\n"),
+    );
+  }
 }
 
 function teleportToSafeChunk(player) {
@@ -778,7 +810,11 @@ function showStatus(player, includeHelpHint = false) {
   }
 
   player.sendMessage(lines.join("\n"));
-  player.onScreenDisplay.setActionBar(`§6Pool ${state.progress}§f | OW ${getDimensionState("minecraft:overworld").unlockedChunks} | N ${getDimensionState("minecraft:nether").unlockedChunks} | E ${getDimensionState("minecraft:the_end").unlockedChunks}`);
+  const dimId = player.dimension.id;
+  const nextCostBar = calculateUnlockCost(dimId);
+  player.onScreenDisplay.setActionBar(
+    `§6Pool §a${state.progress}§6 | Next(${DIMENSION_LABELS[dimId]}) §e${nextCostBar} | OW §f${getDimensionState("minecraft:overworld").unlockedChunks} §7N §f${getDimensionState("minecraft:nether").unlockedChunks} §7E §f${getDimensionState("minecraft:the_end").unlockedChunks}`,
+  );
 }
 
 function showHelp(player) {
