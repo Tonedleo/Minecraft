@@ -1,7 +1,7 @@
 {
   "format_version": 2,
   "header": {
-    "name": "Locked Chunk Survival BP",
+    "name": "Bedrock Edition Locked",
     "description": "Shared chunk-by-chunk survival progression for any Bedrock world.",
     "uuid": "f915d7a3-1522-4850-bb16-f6c7fc960dc4",
     "version": [

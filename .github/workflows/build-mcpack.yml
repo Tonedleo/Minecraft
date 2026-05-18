@@ -17,11 +17,11 @@ jobs:
       - name: Package behavior pack
         run: |
           cd /home/runner/work/Minecraft/Minecraft
-          rm -f BedrockAdvancementsBP.mcpack
-          zip -r BedrockAdvancementsBP.mcpack BedrockAdvancementsBP
+          rm -f BedrockEditionLocked.mcpack
+          zip -r BedrockEditionLocked.mcpack BedrockAdvancementsBP
 
       - name: Upload .mcpack artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BedrockAdvancementsBP
-          path: /home/runner/work/Minecraft/Minecraft/BedrockAdvancementsBP.mcpack
+          name: BedrockEditionLocked
+          path: /home/runner/work/Minecraft/Minecraft/BedrockEditionLocked.mcpack

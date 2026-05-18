@@ -31,11 +31,11 @@ Locked Chunk Survival for Minecraft Bedrock Edition.
    - `!lc admin setanchor nether`
    - `!lc admin setanchor end`
 
-## Download .mcpack artifact
+## Download latest test-ready .mcpack artifact
 
 1. Open the latest run in **Actions**.
-2. Download artifact **BedrockAdvancementsBP**.
-3. Extract it and use `BedrockAdvancementsBP.mcpack` to import into Minecraft.
+2. Download artifact **BedrockEditionLocked**.
+3. Extract it and use `BedrockEditionLocked.mcpack` to import into Minecraft.
 
 ## Player commands
 
