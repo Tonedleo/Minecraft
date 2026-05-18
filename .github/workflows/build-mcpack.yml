@@ -1,0 +1,27 @@
+name: Build .mcpack
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Package behavior pack
+        run: |
+          cd /home/runner/work/Minecraft/Minecraft
+          rm -f BedrockAdvancementsBP.mcpack
+          zip -r BedrockAdvancementsBP.mcpack BedrockAdvancementsBP
+
+      - name: Upload .mcpack artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BedrockAdvancementsBP
+          path: /home/runner/work/Minecraft/Minecraft/BedrockAdvancementsBP.mcpack
