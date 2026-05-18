@@ -38,11 +38,196 @@ const CONFIG = {
   },
 };
 const RESOURCE_TIERS = {
+  // ── Tier 0 – Common / junk (very cheap, high quantity needed) ──────────
+  dirt: {
+    itemId: "minecraft:dirt",
+    amount: 64,
+    points: 1,
+    label: "64 dirt",
+  },
+  gravel: {
+    itemId: "minecraft:gravel",
+    amount: 64,
+    points: 1,
+    label: "64 gravel",
+  },
+  sand: {
+    itemId: "minecraft:sand",
+    amount: 64,
+    points: 1,
+    label: "64 sand",
+  },
+  cobblestone: {
+    itemId: "minecraft:cobblestone",
+    amount: 64,
+    points: 1,
+    label: "64 cobblestone",
+  },
+  stick: {
+    itemId: "minecraft:stick",
+    amount: 32,
+    points: 1,
+    label: "32 sticks",
+  },
+  // ── Tier 1 – Early-game renewable / basic wood ────────────────────────
+  log: {
+    itemId: "minecraft:oak_log",
+    amount: 32,
+    points: 1,
+    label: "32 oak logs",
+  },
+  birch: {
+    itemId: "minecraft:birch_log",
+    amount: 32,
+    points: 1,
+    label: "32 birch logs",
+  },
+  spruce: {
+    itemId: "minecraft:spruce_log",
+    amount: 32,
+    points: 1,
+    label: "32 spruce logs",
+  },
+  jungle: {
+    itemId: "minecraft:jungle_log",
+    amount: 32,
+    points: 1,
+    label: "32 jungle logs",
+  },
+  acacia: {
+    itemId: "minecraft:acacia_log",
+    amount: 32,
+    points: 1,
+    label: "32 acacia logs",
+  },
+  darkoak: {
+    itemId: "minecraft:dark_oak_log",
+    amount: 32,
+    points: 1,
+    label: "32 dark oak logs",
+  },
+  charcoal: {
+    itemId: "minecraft:charcoal",
+    amount: 32,
+    points: 1,
+    label: "32 charcoal",
+  },
+  // ── Tier 2 – Stone & early smelted ────────────────────────────────────
+  stone: {
+    itemId: "minecraft:stone",
+    amount: 64,
+    points: 1,
+    label: "64 stone",
+  },
+  coal: {
+    itemId: "minecraft:coal",
+    amount: 32,
+    points: 1,
+    label: "32 coal",
+  },
+  flint: {
+    itemId: "minecraft:flint",
+    amount: 32,
+    points: 1,
+    label: "32 flint",
+  },
+  leather: {
+    itemId: "minecraft:leather",
+    amount: 16,
+    points: 1,
+    label: "16 leather",
+  },
+  bone: {
+    itemId: "minecraft:bone",
+    amount: 16,
+    points: 1,
+    label: "16 bones",
+  },
+  string: {
+    itemId: "minecraft:string",
+    amount: 32,
+    points: 1,
+    label: "32 string",
+  },
+  feather: {
+    itemId: "minecraft:feather",
+    amount: 32,
+    points: 1,
+    label: "32 feathers",
+  },
+  // ── Tier 3 – Mid-game crafted / smelted resources ─────────────────────
+  brick: {
+    itemId: "minecraft:brick",
+    amount: 32,
+    points: 2,
+    label: "32 bricks",
+  },
+  cactus: {
+    itemId: "minecraft:cactus",
+    amount: 32,
+    points: 1,
+    label: "32 cactus",
+  },
+  sugarcane: {
+    itemId: "minecraft:reeds",
+    amount: 32,
+    points: 1,
+    label: "32 sugar cane",
+  },
+  wheat: {
+    itemId: "minecraft:wheat",
+    amount: 32,
+    points: 1,
+    label: "32 wheat",
+  },
+  melon: {
+    itemId: "minecraft:melon_slice",
+    amount: 32,
+    points: 1,
+    label: "32 melon slices",
+  },
+  wool: {
+    itemId: "minecraft:white_wool",
+    amount: 16,
+    points: 1,
+    label: "16 wool",
+  },
+  glass: {
+    itemId: "minecraft:glass",
+    amount: 32,
+    points: 1,
+    label: "32 glass",
+  },
+  // ── Tier 4 – Underground common ores ─────────────────────────────────
+  rawcopper: {
+    itemId: "minecraft:raw_copper",
+    amount: 32,
+    points: 1,
+    label: "32 raw copper",
+  },
+  copper: {
+    itemId: "minecraft:copper_ingot",
+    amount: 32,
+    points: 1,
+    label: "32 copper ingots",
+  },
+  rawiron: {
+    itemId: "minecraft:raw_iron",
+    amount: 16,
+    points: 1,
+    label: "16 raw iron",
+  },
   iron: {
     itemId: "minecraft:iron_ingot",
     amount: 16,
     points: 2,
     label: "16 iron ingots",
+  },
+  rawgold: {
+    itemId: "minecraft:raw_gold",
+    amount: 16,
+    points: 2,
+    label: "16 raw gold",
   },
   gold: {
     itemId: "minecraft:gold_ingot",
@@ -50,6 +235,19 @@ const RESOURCE_TIERS = {
     points: 3,
     label: "16 gold ingots",
   },
+  lapis: {
+    itemId: "minecraft:lapis_lazuli",
+    amount: 32,
+    points: 2,
+    label: "32 lapis lazuli",
+  },
+  redstone: {
+    itemId: "minecraft:redstone",
+    amount: 32,
+    points: 2,
+    label: "32 redstone dust",
+  },
+  // ── Tier 5 – Valuable overworld ───────────────────────────────────────
   diamond: {
     itemId: "minecraft:diamond",
     amount: 4,
@@ -62,23 +260,154 @@ const RESOURCE_TIERS = {
     points: 6,
     label: "8 emeralds",
   },
+  amethyst: {
+    itemId: "minecraft:amethyst_shard",
+    amount: 16,
+    points: 3,
+    label: "16 amethyst shards",
+  },
+  // ── Tier 6 – Nether resources ─────────────────────────────────────────
+  netherbrick: {
+    itemId: "minecraft:netherbrick",
+    amount: 32,
+    points: 2,
+    label: "32 nether bricks",
+  },
+  netherwart: {
+    itemId: "minecraft:nether_wart",
+    amount: 16,
+    points: 2,
+    label: "16 nether wart",
+  },
+  quartz: {
+    itemId: "minecraft:quartz",
+    amount: 16,
+    points: 2,
+    label: "16 quartz",
+  },
   blaze: {
     itemId: "minecraft:blaze_rod",
     amount: 8,
     points: 4,
     label: "8 blaze rods",
   },
+  blazepowder: {
+    itemId: "minecraft:blaze_powder",
+    amount: 16,
+    points: 3,
+    label: "16 blaze powder",
+  },
+  magma: {
+    itemId: "minecraft:magma_cream",
+    amount: 8,
+    points: 3,
+    label: "8 magma cream",
+  },
+  glowstone: {
+    itemId: "minecraft:glowstone_dust",
+    amount: 16,
+    points: 3,
+    label: "16 glowstone dust",
+  },
+  goldnugget: {
+    itemId: "minecraft:gold_nugget",
+    amount: 32,
+    points: 2,
+    label: "32 gold nuggets",
+  },
+  // ── Tier 7 – End / ocean / biome-rare ────────────────────────────────
   pearl: {
     itemId: "minecraft:ender_pearl",
     amount: 4,
     points: 4,
     label: "4 ender pearls",
   },
+  eye: {
+    itemId: "minecraft:ender_eye",
+    amount: 2,
+    points: 5,
+    label: "2 eyes of ender",
+  },
+  prismarine: {
+    itemId: "minecraft:prismarine_shard",
+    amount: 16,
+    points: 3,
+    label: "16 prismarine shards",
+  },
+  heart: {
+    itemId: "minecraft:heart_of_the_sea",
+    amount: 1,
+    points: 8,
+    label: "1 heart of the sea",
+  },
+  shulker: {
+    itemId: "minecraft:shulker_shell",
+    amount: 2,
+    points: 6,
+    label: "2 shulker shells",
+  },
+  elytra: {
+    itemId: "minecraft:elytra",
+    amount: 1,
+    points: 15,
+    label: "1 elytra",
+  },
+  // ── Tier 8 – Obsidian-tier construction ──────────────────────────────
+  obsidian: {
+    itemId: "minecraft:obsidian",
+    amount: 8,
+    points: 5,
+    label: "8 obsidian",
+  },
+  cryingobsidian: {
+    itemId: "minecraft:crying_obsidian",
+    amount: 4,
+    points: 5,
+    label: "4 crying obsidian",
+  },
+  respawn: {
+    itemId: "minecraft:respawn_anchor",
+    amount: 1,
+    points: 8,
+    label: "1 respawn anchor",
+  },
+  // ── Tier 9 – Netherite chain ──────────────────────────────────────────
   debris: {
     itemId: "minecraft:ancient_debris",
     amount: 1,
     points: 10,
     label: "1 ancient debris",
+  },
+  netheritescrap: {
+    itemId: "minecraft:netherite_scrap",
+    amount: 1,
+    points: 8,
+    label: "1 netherite scrap",
+  },
+  netherite: {
+    itemId: "minecraft:netherite_ingot",
+    amount: 1,
+    points: 14,
+    label: "1 netherite ingot",
+  },
+  // ── Tier 10 – Boss drops / end-game ──────────────────────────────────
+  totem: {
+    itemId: "minecraft:totem_of_undying",
+    amount: 1,
+    points: 12,
+    label: "1 totem of undying",
+  },
+  trident: {
+    itemId: "minecraft:trident",
+    amount: 1,
+    points: 10,
+    label: "1 trident",
+  },
+  dragonegg: {
+    itemId: "minecraft:dragon_egg",
+    amount: 1,
+    points: 30,
+    label: "1 dragon egg",
   },
   star: {
     itemId: "minecraft:nether_star",
