@@ -27,6 +27,10 @@ const CONFIG = {
     base: 18,
     perChunk: 6,
     ringBonus: 4,
+    randomRange: {
+      minFactor: 0.65,
+      maxFactor: 1.35,
+    },
     dimensionMultiplier: {
       "minecraft:overworld": 1,
       "minecraft:nether": 1.15,
@@ -442,6 +446,7 @@ function createDefaultDimensionState(dimensionId) {
     anchorY: DEFAULT_ANCHOR_Y[dimensionId] ?? 64,
     anchorSet: false,
     unlockedChunks: 1,
+    nextUnlockCost: null,
   };
 }
 
@@ -505,6 +510,10 @@ function loadState() {
       ...createDefaultDimensionState(dimensionId),
       ...(state.dimensions[dimensionId] ?? {}),
     };
+    state.dimensions[dimensionId].nextUnlockCost = normalizeUnlockCost(
+      state.dimensions[dimensionId].nextUnlockCost,
+    );
+    ensureNextUnlockCost(dimensionId);
   }
 
   rebuildAllUnlockedCaches();
@@ -540,14 +549,47 @@ function getRingForChunkCount(chunkCount) {
   return Math.ceil((Math.sqrt(chunkCount) - 1) / 2);
 }
 
-function calculateUnlockCost(dimensionId) {
-  const dimensionState = getDimensionState(dimensionId);
-  const currentChunks = dimensionState.unlockedChunks;
+function calculateBaseUnlockCost(dimensionId, currentChunks) {
   const baseCost = CONFIG.unlockCost.base;
   const scaleCost = currentChunks * CONFIG.unlockCost.perChunk;
   const ringCost = getRingForChunkCount(currentChunks + 1) * CONFIG.unlockCost.ringBonus;
   const multiplier = CONFIG.unlockCost.dimensionMultiplier[dimensionId] ?? 1;
   return Math.ceil((baseCost + scaleCost + ringCost) * multiplier);
+}
+
+function getRandomInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function rollUnlockCost(dimensionId, currentChunks) {
+  const baselineCost = calculateBaseUnlockCost(dimensionId, currentChunks);
+  const minFactor = Math.max(0.1, Number(CONFIG.unlockCost.randomRange?.minFactor ?? 0.65));
+  const maxFactor = Math.max(minFactor, Number(CONFIG.unlockCost.randomRange?.maxFactor ?? 1.35));
+  const minCost = Math.max(1, Math.floor(baselineCost * minFactor));
+  const maxCost = Math.max(minCost, Math.ceil(baselineCost * maxFactor));
+  return getRandomInteger(minCost, maxCost);
+}
+
+function normalizeUnlockCost(value) {
+  const parsed = Math.floor(Number(value));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function ensureNextUnlockCost(dimensionId) {
+  const dimensionState = getDimensionState(dimensionId);
+  const normalizedCost = normalizeUnlockCost(dimensionState.nextUnlockCost);
+  if (normalizedCost) {
+    dimensionState.nextUnlockCost = normalizedCost;
+    return normalizedCost;
+  }
+
+  dimensionState.nextUnlockCost = rollUnlockCost(dimensionId, dimensionState.unlockedChunks);
+  markDirty();
+  return dimensionState.nextUnlockCost;
+}
+
+function calculateUnlockCost(dimensionId) {
+  return ensureNextUnlockCost(dimensionId);
 }
 
 function addProgress(points) {
@@ -748,7 +790,7 @@ function showHelp(player) {
     [
       "§6[LockedChunk] Commands",
       "§f!lc show §7- Show shared chunk progress",
-      "§f!lc unlock <overworld|nether|end> §7- Spend shared progress on the next chunk",
+      "§f!lc unlock <overworld|nether|end> §7- Spend shared progress on a random next chunk cost",
       "§f!lc deposit <resource> [count] §7- Turn rare items into shared unlock progress",
       "§f!lc help §7- Show this help",
       "§fResources: §7" + resourceList,
@@ -787,6 +829,7 @@ function setAnchorFromPlayer(player, dimensionId) {
 }
 
 function tryUnlockDimension(player, dimensionId) {
+  const dimensionState = getDimensionState(dimensionId);
   const nextCost = calculateUnlockCost(dimensionId);
   if (state.progress < nextCost) {
     player.sendMessage(
@@ -796,10 +839,12 @@ function tryUnlockDimension(player, dimensionId) {
   }
 
   spendProgress(nextCost);
-  getDimensionState(dimensionId).unlockedChunks += 1;
+  dimensionState.unlockedChunks += 1;
+  dimensionState.nextUnlockCost = rollUnlockCost(dimensionId, dimensionState.unlockedChunks);
+  markDirty();
   rebuildUnlockedCache(dimensionId);
   world.sendMessage(
-    `§a[LockedChunk] ${player.name} unlocked chunk #${getDimensionState(dimensionId).unlockedChunks} in the ${DIMENSION_LABELS[dimensionId]}!`,
+    `§a[LockedChunk] ${player.name} unlocked chunk #${dimensionState.unlockedChunks} in the ${DIMENSION_LABELS[dimensionId]}! Next random cost: ${dimensionState.nextUnlockCost}.`,
   );
   for (const onlinePlayer of world.getAllPlayers()) {
     onlinePlayer.onScreenDisplay.setActionBar(
@@ -1030,6 +1075,7 @@ world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
   system.run(() => {
     enforceBounds(player, initialSpawn);
     if (initialSpawn) {
+      player.sendMessage(`§a[LockedChunk] Hello ${player.name}!`);
       showHelp(player);
     }
   });

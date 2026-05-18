@@ -39,8 +39,8 @@ Locked Chunk Survival for Minecraft Bedrock Edition.
 
 ## Player commands
 
-- `!lc show` — show the shared progress pool and next unlock costs.
-- `!lc unlock <overworld|nether|end>` — spend shared progress on the next chunk in that dimension.
+- `!lc show` — show the shared progress pool and each dimension's next random unlock cost.
+- `!lc unlock <overworld|nether|end>` — spend shared progress on that dimension's current random unlock requirement.
 - `!lc deposit <resource> [count]` — convert rare resources into shared progress.
 - `!lc help` — show command help.
 
@@ -62,6 +62,11 @@ Operators, or players with the `lc.admin` tag, can also use:
 - `!lc admin setanchor [dimension]`
 - `!lc admin grant <points>`
 - `!lc admin reset`
+
+## Do you need cheats enabled?
+
+- For normal gameplay (`!lc show`, `!lc unlock`, `!lc deposit`), cheats are **not required**.
+- For admin setup/management, you need operator access (or the `lc.admin` tag), which is usually managed with command permissions.
 
 ## Gameplay rules
 
