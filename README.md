@@ -31,16 +31,24 @@ Locked Chunk Survival for Minecraft Bedrock Edition.
    - `!lc admin setanchor nether`
    - `!lc admin setanchor end`
 
-## Download .mcpack artifact
+## Download
+
+**Easiest (Android / direct install):**
+
+1. Go to the [**Releases**](../../releases/tag/latest-mcpack) page and tap **BedrockEditionLocked.mcpack**.
+2. Android will ask which app to open it with — choose **Minecraft**.
+3. The pack is imported automatically — no unzipping needed.
+
+**From Actions (advanced):**
 
 1. Open the latest run in **Actions**.
-2. Download artifact **BedrockAdvancementsBP**.
-3. Extract it and use `BedrockAdvancementsBP.mcpack` to import into Minecraft.
+2. Download artifact **BedrockEditionLocked**.
+3. Unzip it and import `BedrockEditionLocked.mcpack` into Minecraft manually.
 
 ## Player commands
 
-- `!lc show` — show the shared progress pool and next unlock costs.
-- `!lc unlock <overworld|nether|end>` — spend shared progress on the next chunk in that dimension.
+- `!lc show` — show the shared progress pool and each dimension's next random unlock cost.
+- `!lc unlock <overworld|nether|end>` — spend shared progress on that dimension's current random unlock requirement.
 - `!lc deposit <resource> [count]` — convert rare resources into shared progress.
 - `!lc help` — show command help.
 
@@ -63,10 +71,16 @@ Operators, or players with the `lc.admin` tag, can also use:
 - `!lc admin grant <points>`
 - `!lc admin reset`
 
+## Do you need cheats enabled?
+
+- For normal gameplay (`!lc show`, `!lc unlock`, `!lc deposit`), cheats are **not required**.
+- For admin setup/management, you need operator access (or the `lc.admin` tag), which is usually managed with command permissions.
+
 ## Gameplay rules
 
 - The pack tracks chunk unlocks with shared persistent world state.
 - Every new unlock adds one more chunk to that dimension's spiral path.
 - Players are pushed back into unlocked space if they cross into a locked chunk.
+- Walking to the edge of unlocked space shows the next chunk price in chat.
 - Breaking, placing, or using blocks in locked chunks is blocked.
 - Nether and End anchors are set the first time players enter those dimensions, unless an admin overrides them first.

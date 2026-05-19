@@ -20,6 +20,7 @@ const DEFAULT_ANCHOR_Y = {
 };
 const CONFIG = {
   tickInterval: 20,
+  enforcementIntervalTicks: 5,
   ticksPerMinecraftDay: 24000,
   dayProgressReward: 3,
   ticksPerPlaytimePoint: 1200,
@@ -27,6 +28,10 @@ const CONFIG = {
     base: 18,
     perChunk: 6,
     ringBonus: 4,
+    randomRange: {
+      minFactor: 0.65,
+      maxFactor: 1.35,
+    },
     dimensionMultiplier: {
       "minecraft:overworld": 1,
       "minecraft:nether": 1.15,
@@ -35,6 +40,8 @@ const CONFIG = {
   },
   messages: {
     boundaryCooldownTicks: 100,
+    edgeWarningCooldownTicks: 40,
+    edgeWarningMarginBlocks: 1,
   },
 };
 const RESOURCE_TIERS = {
@@ -434,6 +441,7 @@ let runtimeTicks = 0;
 const unlockedChunkCache = new Map();
 const lastSafePositions = new Map();
 const boundaryWarnings = new Map();
+const edgeWarnings = new Map();
 
 function createDefaultDimensionState(dimensionId) {
   return {
@@ -442,6 +450,7 @@ function createDefaultDimensionState(dimensionId) {
     anchorY: DEFAULT_ANCHOR_Y[dimensionId] ?? 64,
     anchorSet: false,
     unlockedChunks: 1,
+    nextUnlockCost: null,
   };
 }
 
@@ -505,6 +514,10 @@ function loadState() {
       ...createDefaultDimensionState(dimensionId),
       ...(state.dimensions[dimensionId] ?? {}),
     };
+    state.dimensions[dimensionId].nextUnlockCost = normalizeUnlockCost(
+      state.dimensions[dimensionId].nextUnlockCost,
+    );
+    ensureNextUnlockCost(dimensionId);
   }
 
   rebuildAllUnlockedCaches();
@@ -540,14 +553,47 @@ function getRingForChunkCount(chunkCount) {
   return Math.ceil((Math.sqrt(chunkCount) - 1) / 2);
 }
 
-function calculateUnlockCost(dimensionId) {
-  const dimensionState = getDimensionState(dimensionId);
-  const currentChunks = dimensionState.unlockedChunks;
+function calculateBaseUnlockCost(dimensionId, currentChunks) {
   const baseCost = CONFIG.unlockCost.base;
   const scaleCost = currentChunks * CONFIG.unlockCost.perChunk;
   const ringCost = getRingForChunkCount(currentChunks + 1) * CONFIG.unlockCost.ringBonus;
   const multiplier = CONFIG.unlockCost.dimensionMultiplier[dimensionId] ?? 1;
   return Math.ceil((baseCost + scaleCost + ringCost) * multiplier);
+}
+
+function getRandomInteger(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function rollUnlockCost(dimensionId, currentChunks) {
+  const baselineCost = calculateBaseUnlockCost(dimensionId, currentChunks);
+  const minFactor = Math.max(0.1, Number(CONFIG.unlockCost.randomRange?.minFactor ?? 0.65));
+  const maxFactor = Math.max(minFactor, Number(CONFIG.unlockCost.randomRange?.maxFactor ?? 1.35));
+  const minCost = Math.max(1, Math.floor(baselineCost * minFactor));
+  const maxCost = Math.max(minCost, Math.ceil(baselineCost * maxFactor));
+  return getRandomInteger(minCost, maxCost);
+}
+
+function normalizeUnlockCost(value) {
+  const parsed = Math.floor(Number(value));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function ensureNextUnlockCost(dimensionId) {
+  const dimensionState = getDimensionState(dimensionId);
+  const normalizedCost = normalizeUnlockCost(dimensionState.nextUnlockCost);
+  if (normalizedCost) {
+    dimensionState.nextUnlockCost = normalizedCost;
+    return normalizedCost;
+  }
+
+  dimensionState.nextUnlockCost = rollUnlockCost(dimensionId, dimensionState.unlockedChunks);
+  markDirty();
+  return dimensionState.nextUnlockCost;
+}
+
+function calculateUnlockCost(dimensionId) {
+  return ensureNextUnlockCost(dimensionId);
 }
 
 function addProgress(points) {
@@ -637,8 +683,61 @@ function isChunkUnlocked(dimensionId, location) {
   const playerChunkZ = getChunkCoordinate(location.z);
   const relativeChunkX = playerChunkX - dimensionState.anchorChunkX;
   const relativeChunkZ = playerChunkZ - dimensionState.anchorChunkZ;
+  return isRelativeChunkUnlocked(dimensionId, relativeChunkX, relativeChunkZ);
+}
+
+function isRelativeChunkUnlocked(dimensionId, relativeChunkX, relativeChunkZ) {
   const unlockedSet = unlockedChunkCache.get(dimensionId);
   return unlockedSet?.has(`${relativeChunkX},${relativeChunkZ}`) ?? false;
+}
+
+function getRelativeChunkCoordinates(dimensionId, location) {
+  const dimensionState = getDimensionState(dimensionId);
+  const playerChunkX = getChunkCoordinate(location.x);
+  const playerChunkZ = getChunkCoordinate(location.z);
+  return {
+    x: playerChunkX - dimensionState.anchorChunkX,
+    z: playerChunkZ - dimensionState.anchorChunkZ,
+  };
+}
+
+function getChunkOffset(blockCoordinate) {
+  return ((Math.floor(blockCoordinate) % 16) + 16) % 16;
+}
+
+function isNearLockedBoundary(player) {
+  const dimensionId = player.dimension.id;
+  const dimensionState = getDimensionState(dimensionId);
+  if (!dimensionState.anchorSet) {
+    return false;
+  }
+
+  const relativeChunk = getRelativeChunkCoordinates(dimensionId, player.location);
+  if (!isRelativeChunkUnlocked(dimensionId, relativeChunk.x, relativeChunk.z)) {
+    return false;
+  }
+
+  const offsetX = getChunkOffset(player.location.x);
+  const offsetZ = getChunkOffset(player.location.z);
+  const margin = Math.max(0, Math.min(7, Math.floor(CONFIG.messages.edgeWarningMarginBlocks)));
+
+  if (offsetX <= margin && !isRelativeChunkUnlocked(dimensionId, relativeChunk.x - 1, relativeChunk.z)) {
+    return true;
+  }
+
+  if (offsetX >= 15 - margin && !isRelativeChunkUnlocked(dimensionId, relativeChunk.x + 1, relativeChunk.z)) {
+    return true;
+  }
+
+  if (offsetZ <= margin && !isRelativeChunkUnlocked(dimensionId, relativeChunk.x, relativeChunk.z - 1)) {
+    return true;
+  }
+
+  if (offsetZ >= 15 - margin && !isRelativeChunkUnlocked(dimensionId, relativeChunk.x, relativeChunk.z + 1)) {
+    return true;
+  }
+
+  return false;
 }
 
 function rememberSafeLocation(player) {
@@ -666,8 +765,58 @@ function sendBoundaryWarning(player) {
   }
 
   boundaryWarnings.set(player.id, runtimeTicks);
-  player.onScreenDisplay.setActionBar("§cThat chunk is still locked.");
-  player.sendMessage("§c[LockedChunk] Stay inside unlocked chunks or earn more progress.");
+
+  const dimensionId = player.dimension.id;
+  const nextCost = calculateUnlockCost(dimensionId);
+  const currentPool = state?.progress ?? 0;
+  const shortfall = Math.max(0, nextCost - currentPool);
+  const dimLabel = DIMENSION_LABELS[dimensionId] ?? dimensionId;
+
+  player.onScreenDisplay.setActionBar(
+    `§cLocked! Need §e${nextCost}§c progress (have §a${currentPool}§c) — type §f!lc unlock ${dimLabel.toLowerCase()}`,
+  );
+
+  if (shortfall > 0) {
+    player.sendMessage(
+      [
+        `§c[LockedChunk] §fThat chunk is locked!`,
+        `§7  Dimension : §b${dimLabel}`,
+        `§7  Pool now  : §a${currentPool}`,
+        `§7  Need      : §e${nextCost}`,
+        `§7  Shortfall : §c${shortfall}`,
+        `§7Earn progress: §f!lc deposit <resource>§7 (e.g. §f!lc deposit iron§7)`,
+        `§7Then unlock  : §f!lc unlock ${dimLabel.toLowerCase()}`,
+        `§7See options  : §f!lc help`,
+      ].join("\n"),
+    );
+  } else {
+    player.sendMessage(
+      [
+        `§c[LockedChunk] §fThat chunk is locked!`,
+        `§7  Dimension : §b${dimLabel}`,
+        `§7  Pool now  : §a${currentPool} §7(enough!)`,
+        `§7Unlock it now: §f!lc unlock ${dimLabel.toLowerCase()}`,
+      ].join("\n"),
+    );
+  }
+}
+
+function sendEdgeWarning(player) {
+  const lastWarningTick = edgeWarnings.get(player.id) ?? -CONFIG.messages.edgeWarningCooldownTicks;
+  if (runtimeTicks - lastWarningTick < CONFIG.messages.edgeWarningCooldownTicks) {
+    return;
+  }
+
+  edgeWarnings.set(player.id, runtimeTicks);
+
+  const dimensionId = player.dimension.id;
+  const nextCost = calculateUnlockCost(dimensionId);
+  const currentPool = state?.progress ?? 0;
+  const shortfall = Math.max(0, nextCost - currentPool);
+  const dimLabel = DIMENSION_LABELS[dimensionId] ?? dimensionId;
+  player.sendMessage(
+    `§e[LockedChunk] Edge of unlocked ${dimLabel}. Next chunk price: §6${nextCost}§e (pool: §a${currentPool}§e, shortfall: §c${shortfall}§e).`,
+  );
 }
 
 function teleportToSafeChunk(player) {
@@ -686,6 +835,9 @@ function enforceBounds(player, forceStatus = false) {
   ensureAnchorForPlayer(player);
 
   if (isChunkUnlocked(player.dimension.id, player.location)) {
+    if (isNearLockedBoundary(player)) {
+      sendEdgeWarning(player);
+    }
     rememberSafeLocation(player);
     if (forceStatus) {
       showStatus(player, true);
@@ -736,7 +888,11 @@ function showStatus(player, includeHelpHint = false) {
   }
 
   player.sendMessage(lines.join("\n"));
-  player.onScreenDisplay.setActionBar(`§6Pool ${state.progress}§f | OW ${getDimensionState("minecraft:overworld").unlockedChunks} | N ${getDimensionState("minecraft:nether").unlockedChunks} | E ${getDimensionState("minecraft:the_end").unlockedChunks}`);
+  const dimId = player.dimension.id;
+  const nextCostBar = calculateUnlockCost(dimId);
+  player.onScreenDisplay.setActionBar(
+    `§6Pool §a${state.progress}§6 | Next(${DIMENSION_LABELS[dimId]}) §e${nextCostBar} | OW §f${getDimensionState("minecraft:overworld").unlockedChunks} §7N §f${getDimensionState("minecraft:nether").unlockedChunks} §7E §f${getDimensionState("minecraft:the_end").unlockedChunks}`,
+  );
 }
 
 function showHelp(player) {
@@ -748,7 +904,7 @@ function showHelp(player) {
     [
       "§6[LockedChunk] Commands",
       "§f!lc show §7- Show shared chunk progress",
-      "§f!lc unlock <overworld|nether|end> §7- Spend shared progress on the next chunk",
+      "§f!lc unlock <overworld|nether|end> §7- Spend shared progress on a random next chunk cost",
       "§f!lc deposit <resource> [count] §7- Turn rare items into shared unlock progress",
       "§f!lc help §7- Show this help",
       "§fResources: §7" + resourceList,
@@ -787,6 +943,7 @@ function setAnchorFromPlayer(player, dimensionId) {
 }
 
 function tryUnlockDimension(player, dimensionId) {
+  const dimensionState = getDimensionState(dimensionId);
   const nextCost = calculateUnlockCost(dimensionId);
   if (state.progress < nextCost) {
     player.sendMessage(
@@ -796,10 +953,12 @@ function tryUnlockDimension(player, dimensionId) {
   }
 
   spendProgress(nextCost);
-  getDimensionState(dimensionId).unlockedChunks += 1;
+  dimensionState.unlockedChunks += 1;
+  dimensionState.nextUnlockCost = rollUnlockCost(dimensionId, dimensionState.unlockedChunks);
+  markDirty();
   rebuildUnlockedCache(dimensionId);
   world.sendMessage(
-    `§a[LockedChunk] ${player.name} unlocked chunk #${getDimensionState(dimensionId).unlockedChunks} in the ${DIMENSION_LABELS[dimensionId]}!`,
+    `§a[LockedChunk] ${player.name} unlocked chunk #${dimensionState.unlockedChunks} in the ${DIMENSION_LABELS[dimensionId]}! Next random cost: ${dimensionState.nextUnlockCost}.`,
   );
   for (const onlinePlayer of world.getAllPlayers()) {
     onlinePlayer.onScreenDisplay.setActionBar(
@@ -1005,12 +1164,18 @@ function awardTimedProgress() {
     addProgress(1);
   }
 
-  for (const player of players) {
-    enforceBounds(player);
-  }
-
   markDirty();
   saveState();
+}
+
+function enforceAllPlayers() {
+  if (!state) {
+    return;
+  }
+
+  for (const player of world.getAllPlayers()) {
+    enforceBounds(player);
+  }
 }
 
 world.afterEvents.worldInitialize.subscribe(({ propertyRegistry }) => {
@@ -1030,6 +1195,7 @@ world.afterEvents.playerSpawn.subscribe(({ player, initialSpawn }) => {
   system.run(() => {
     enforceBounds(player, initialSpawn);
     if (initialSpawn) {
+      player.sendMessage(`§a[LockedChunk] Hello ${player.name}!`);
       showHelp(player);
     }
   });
@@ -1097,3 +1263,4 @@ if (world.beforeEvents.itemUseOn) {
 }
 
 system.runInterval(awardTimedProgress, CONFIG.tickInterval);
+system.runInterval(enforceAllPlayers, CONFIG.enforcementIntervalTicks);

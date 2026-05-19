@@ -5,23 +5,38 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   package:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Package behavior pack
         run: |
-          cd /home/runner/work/Minecraft/Minecraft
-          rm -f BedrockAdvancementsBP.mcpack
-          zip -r BedrockAdvancementsBP.mcpack BedrockAdvancementsBP
+          rm -f BedrockEditionLocked.mcpack
+          zip -r BedrockEditionLocked.mcpack BedrockAdvancementsBP
 
       - name: Upload .mcpack artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
-          name: BedrockAdvancementsBP
-          path: /home/runner/work/Minecraft/Minecraft/BedrockAdvancementsBP.mcpack
+          name: BedrockEditionLocked
+          path: BedrockEditionLocked.mcpack
+
+      - name: Publish release asset (default branch only)
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: softprops/action-gh-release@v2.2.2
+        with:
+          tag_name: latest-mcpack
+          name: Latest .mcpack
+          prerelease: true
+          files: BedrockEditionLocked.mcpack
+          body: |
+            Auto-updated on every push to the default branch.
+
+            **How to install on Android:**
+            1. Tap **BedrockEditionLocked.mcpack** below to download it.
+            2. Android will ask which app to open it with — choose **Minecraft**.
+            3. Minecraft imports the pack automatically.
