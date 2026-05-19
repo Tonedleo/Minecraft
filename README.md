@@ -81,5 +81,6 @@ Operators, or players with the `lc.admin` tag, can also use:
 - The pack tracks chunk unlocks with shared persistent world state.
 - Every new unlock adds one more chunk to that dimension's spiral path.
 - Players are pushed back into unlocked space if they cross into a locked chunk.
+- Walking to the edge of unlocked space shows the next chunk price in chat.
 - Breaking, placing, or using blocks in locked chunks is blocked.
 - Nether and End anchors are set the first time players enter those dimensions, unless an admin overrides them first.

@@ -20,6 +20,7 @@ const DEFAULT_ANCHOR_Y = {
 };
 const CONFIG = {
   tickInterval: 20,
+  enforcementIntervalTicks: 5,
   ticksPerMinecraftDay: 24000,
   dayProgressReward: 3,
   ticksPerPlaytimePoint: 1200,
@@ -39,6 +40,8 @@ const CONFIG = {
   },
   messages: {
     boundaryCooldownTicks: 100,
+    edgeWarningCooldownTicks: 40,
+    edgeWarningMarginBlocks: 1,
   },
 };
 const RESOURCE_TIERS = {
@@ -438,6 +441,7 @@ let runtimeTicks = 0;
 const unlockedChunkCache = new Map();
 const lastSafePositions = new Map();
 const boundaryWarnings = new Map();
+const edgeWarnings = new Map();
 
 function createDefaultDimensionState(dimensionId) {
   return {
@@ -679,8 +683,61 @@ function isChunkUnlocked(dimensionId, location) {
   const playerChunkZ = getChunkCoordinate(location.z);
   const relativeChunkX = playerChunkX - dimensionState.anchorChunkX;
   const relativeChunkZ = playerChunkZ - dimensionState.anchorChunkZ;
+  return isRelativeChunkUnlocked(dimensionId, relativeChunkX, relativeChunkZ);
+}
+
+function isRelativeChunkUnlocked(dimensionId, relativeChunkX, relativeChunkZ) {
   const unlockedSet = unlockedChunkCache.get(dimensionId);
   return unlockedSet?.has(`${relativeChunkX},${relativeChunkZ}`) ?? false;
+}
+
+function getRelativeChunkCoordinates(dimensionId, location) {
+  const dimensionState = getDimensionState(dimensionId);
+  const playerChunkX = getChunkCoordinate(location.x);
+  const playerChunkZ = getChunkCoordinate(location.z);
+  return {
+    x: playerChunkX - dimensionState.anchorChunkX,
+    z: playerChunkZ - dimensionState.anchorChunkZ,
+  };
+}
+
+function getChunkOffset(blockCoordinate) {
+  return ((Math.floor(blockCoordinate) % 16) + 16) % 16;
+}
+
+function isNearLockedBoundary(player) {
+  const dimensionId = player.dimension.id;
+  const dimensionState = getDimensionState(dimensionId);
+  if (!dimensionState.anchorSet) {
+    return false;
+  }
+
+  const relativeChunk = getRelativeChunkCoordinates(dimensionId, player.location);
+  if (!isRelativeChunkUnlocked(dimensionId, relativeChunk.x, relativeChunk.z)) {
+    return false;
+  }
+
+  const offsetX = getChunkOffset(player.location.x);
+  const offsetZ = getChunkOffset(player.location.z);
+  const margin = Math.max(0, Math.min(7, Math.floor(CONFIG.messages.edgeWarningMarginBlocks)));
+
+  if (offsetX <= margin && !isRelativeChunkUnlocked(dimensionId, relativeChunk.x - 1, relativeChunk.z)) {
+    return true;
+  }
+
+  if (offsetX >= 15 - margin && !isRelativeChunkUnlocked(dimensionId, relativeChunk.x + 1, relativeChunk.z)) {
+    return true;
+  }
+
+  if (offsetZ <= margin && !isRelativeChunkUnlocked(dimensionId, relativeChunk.x, relativeChunk.z - 1)) {
+    return true;
+  }
+
+  if (offsetZ >= 15 - margin && !isRelativeChunkUnlocked(dimensionId, relativeChunk.x, relativeChunk.z + 1)) {
+    return true;
+  }
+
+  return false;
 }
 
 function rememberSafeLocation(player) {
@@ -744,6 +801,24 @@ function sendBoundaryWarning(player) {
   }
 }
 
+function sendEdgeWarning(player) {
+  const lastWarningTick = edgeWarnings.get(player.id) ?? -CONFIG.messages.edgeWarningCooldownTicks;
+  if (runtimeTicks - lastWarningTick < CONFIG.messages.edgeWarningCooldownTicks) {
+    return;
+  }
+
+  edgeWarnings.set(player.id, runtimeTicks);
+
+  const dimensionId = player.dimension.id;
+  const nextCost = calculateUnlockCost(dimensionId);
+  const currentPool = state?.progress ?? 0;
+  const shortfall = Math.max(0, nextCost - currentPool);
+  const dimLabel = DIMENSION_LABELS[dimensionId] ?? dimensionId;
+  player.sendMessage(
+    `§e[LockedChunk] Edge of unlocked ${dimLabel}. Next chunk price: §6${nextCost}§e (pool: §a${currentPool}§e, shortfall: §c${shortfall}§e).`,
+  );
+}
+
 function teleportToSafeChunk(player) {
   const savedLocation = lastSafePositions.get(player.id);
   const currentDimensionId = player.dimension.id;
@@ -760,6 +835,9 @@ function enforceBounds(player, forceStatus = false) {
   ensureAnchorForPlayer(player);
 
   if (isChunkUnlocked(player.dimension.id, player.location)) {
+    if (isNearLockedBoundary(player)) {
+      sendEdgeWarning(player);
+    }
     rememberSafeLocation(player);
     if (forceStatus) {
       showStatus(player, true);
@@ -1086,12 +1164,18 @@ function awardTimedProgress() {
     addProgress(1);
   }
 
-  for (const player of players) {
-    enforceBounds(player);
-  }
-
   markDirty();
   saveState();
+}
+
+function enforceAllPlayers() {
+  if (!state) {
+    return;
+  }
+
+  for (const player of world.getAllPlayers()) {
+    enforceBounds(player);
+  }
 }
 
 world.afterEvents.worldInitialize.subscribe(({ propertyRegistry }) => {
@@ -1179,3 +1263,4 @@ if (world.beforeEvents.itemUseOn) {
 }
 
 system.runInterval(awardTimedProgress, CONFIG.tickInterval);
+system.runInterval(enforceAllPlayers, CONFIG.enforcementIntervalTicks);
